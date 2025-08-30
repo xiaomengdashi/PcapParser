@@ -2,6 +2,14 @@
 
 #include <sstream>
 
+PcapParser::PcapParser()
+    : m_lastTimestamp({0, 0}),
+      m_pcapFilePath(""),
+      m_outputCsvFilePath(""),
+      m_pcapReader(nullptr)
+{
+}
+
 PcapParser::PcapParser(const std::string& pcapFilePath, const std::string& outputCsvFilePath)
     : m_lastTimestamp({0, 0}),
       m_pcapFilePath(pcapFilePath),
@@ -21,7 +29,7 @@ PcapParser::~PcapParser()
     }
 }
 
-bool PcapParser::parseFile()
+bool PcapParser::ParseFile()
 {
     if (!m_pcapReader->open())
     {
@@ -32,15 +40,15 @@ bool PcapParser::parseFile()
     pcpp::RawPacket rawPacket;
     while (m_pcapReader->getNextPacket(rawPacket))
     {
-        processPacket(rawPacket);
+        ProcessPacket(rawPacket);
     }
 
     m_pcapReader->close();
-    printPacketInfoTable(m_outputCsvFilePath);
+    PrintPacketInfoTable(m_outputCsvFilePath);
     return true;
 }
 
-void PcapParser::processPacket(pcpp::RawPacket& rawPacket)
+void PcapParser::ProcessPacket(pcpp::RawPacket& rawPacket)
 {
     pcpp::Packet parsedPacket(&rawPacket);
     PacketInfo info;
@@ -104,7 +112,7 @@ void PcapParser::processPacket(pcpp::RawPacket& rawPacket)
         info.tcpSequenceNumber = ntohl(tcpLayer->getTcpHeader()->sequenceNumber);
         info.tcpAckNumber = ntohl(tcpLayer->getTcpHeader()->ackNumber);
         info.tcpWindowSize = ntohs(tcpLayer->getTcpHeader()->windowSize);
-        parseTcpOptions(tcpLayer, info);
+        ParseTcpOptions(tcpLayer, info);
     }
 
     pcpp::UdpLayer* udpLayer = parsedPacket.getLayerOfType<pcpp::UdpLayer>();
@@ -138,7 +146,7 @@ void PcapParser::processPacket(pcpp::RawPacket& rawPacket)
     m_packetInfos.push_back(info);
 }
 
-void PcapParser::parseTcpOptions(pcpp::TcpLayer* tcpLayer, PacketInfo& info)
+void PcapParser::ParseTcpOptions(pcpp::TcpLayer* tcpLayer, PacketInfo& info)
 {
     if (tcpLayer == nullptr)
         return;
@@ -161,7 +169,7 @@ void PcapParser::parseTcpOptions(pcpp::TcpLayer* tcpLayer, PacketInfo& info)
     }
 }
 
-void PcapParser::printPacketInfoTable(const std::string& filename)
+void PcapParser::PrintPacketInfoTable(const std::string& filename)
 {
     std::ofstream outputFile(filename);
     if (!outputFile.is_open())

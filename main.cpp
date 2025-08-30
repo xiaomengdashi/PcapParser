@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     std::string outputCsvFilePath = argv[2];
     PcapParser parser(pcapFilePath, outputCsvFilePath);
 
-    if (!parser.parseFile())
+    if (!parser.ParseFile())
     {
         std::cerr << "Failed to parse pcap file." << std::endl;
         return 1;

@@ -1,5 +1,4 @@
-#ifndef PCAP_PARSER_H
-#define PCAP_PARSER_H
+#pragma once
 
 #include <iomanip>
 #include <iostream>
@@ -65,8 +64,14 @@ class PcapParser
 {
    public:
     /**
-     * @brief Constructor for PcapParser.
+     * @brief Default constructor for PcapParser.
+     */
+    PcapParser();
+
+    /**
+     * @brief Constructor for PcapParser with file paths.
      * @param pcapFilePath The path to the pcap file to be parsed.
+     * @param outputCsvFilePath The path to the output CSV file.
      */
     explicit PcapParser(const std::string& pcapFilePath, const std::string& outputCsvFilePath);
 
@@ -75,82 +80,35 @@ class PcapParser
      */
     ~PcapParser();
 
-   private:
-    timespec m_lastTimestamp;
-
-   public:
     /**
      * @brief Parses the pcap file and prints information about each packet.
      * @return True if parsing is successful, false otherwise.
      */
-    bool parseFile();
+    bool ParseFile();
 
     /**
      * @brief Prints all parsed packet information in a table format.
+     * @param filename The output CSV file name.
      */
-    void printPacketInfoTable(const std::string& filename);
-    void parseTcpOptions(pcpp::TcpLayer* tcpLayer, PacketInfo& info);
+    void PrintPacketInfoTable(const std::string& filename);
 
-   private:
-    std::string m_pcapFilePath;
-    std::string m_outputCsvFilePath;
-    pcpp::PcapFileReaderDevice* m_pcapReader;
-    std::vector<PacketInfo> m_packetInfos;
+    /**
+     * @brief Parses TCP options from the TCP layer.
+     * @param tcpLayer The TCP layer to parse options from.
+     * @param info The packet info structure to populate.
+     */
+    void ParseTcpOptions(pcpp::TcpLayer* tcpLayer, PacketInfo& info);
 
     /**
      * @brief Processes a single packet and extracts relevant information.
      * @param rawPacket The raw packet data.
      */
-    void processPacket(pcpp::RawPacket& rawPacket);
+    void ProcessPacket(pcpp::RawPacket& rawPacket);
 
-    /**
-     * @brief Prints Ethernet layer information.
-     * @param ethLayer The Ethernet layer object.
-     */
-    void printEthLayer(pcpp::EthLayer* ethLayer);
-
-    /**
-     * @brief Prints IPv4 layer information.
-     * @param ipv4Layer The IPv4 layer object.
-     */
-    void printIPv4Layer(pcpp::IPv4Layer* ipv4Layer);
-
-    /**
-     * @brief Prints IPv6 layer information.
-     * @param ipv6Layer The IPv6 layer object.
-     */
-    void printIPv6Layer(pcpp::IPv6Layer* ipv6Layer);
-
-    /**
-     * @brief Prints ARP layer information.
-     * @param arpLayer The ARP layer object.
-     */
-    void printArpLayer(pcpp::ArpLayer* arpLayer);
-
-    /**
-     * @brief Prints UDP layer information.
-     * @param udpLayer The UDP layer object.
-     */
-    void printUdpLayer(pcpp::UdpLayer* udpLayer);
-
-    /**
-     * @brief Prints TCP layer information.
-     * @param tcpLayer The TCP layer object.
-     */
-    void printTcpLayer(pcpp::TcpLayer* tcpLayer);
-
-    /**
-     * @brief Prints ICMP layer information.
-     * @param icmpLayer The ICMP layer object.
-     */
-    void printIcmpLayer(pcpp::IcmpLayer* icmpLayer);
-
-    /**
-     * @brief Prints raw data in hexadecimal and ASCII format.
-     * @param data The raw data buffer.
-     * @param dataLen The length of the raw data.
-     */
-    void printRawData(const uint8_t* data, size_t dataLen);
+   private:
+    timespec m_lastTimestamp;
+    std::string m_pcapFilePath;
+    std::string m_outputCsvFilePath;
+    pcpp::PcapFileReaderDevice* m_pcapReader;
+    std::vector<PacketInfo> m_packetInfos;
 };
-
-#endif  // PCAP_PARSER_H
