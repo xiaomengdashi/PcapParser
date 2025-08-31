@@ -2,11 +2,7 @@
 
 #include <sstream>
 
-PcapParser::PcapParser()
-    : m_lastTimestamp({0, 0}),
-      m_pcapFilePath(""),
-      m_outputCsvFilePath(""),
-      m_pcapReader(nullptr)
+PcapParser::PcapParser() : m_lastTimestamp({0, 0}), m_pcapFilePath(""), m_outputCsvFilePath(""), m_pcapReader(nullptr)
 {
 }
 
@@ -144,6 +140,108 @@ void PcapParser::ProcessPacket(pcpp::RawPacket& rawPacket)
     }
 
     m_packetInfos.push_back(info);
+}
+
+std::vector<PacketInfo> PcapParser::FilterByProtocol(int protocol) const
+{
+    std::vector<PacketInfo> filteredPackets;
+    for (const auto& packet : m_packetInfos)
+    {
+        if (packet.ipv4Protocol == protocol || packet.ipv6NextHeader == protocol)
+        {
+            filteredPackets.push_back(packet);
+        }
+    }
+    return filteredPackets;
+}
+
+std::vector<PacketInfo> PcapParser::FilterByIp(const std::string& ip, bool isSource) const
+{
+    std::vector<PacketInfo> filteredPackets;
+    for (const auto& packet : m_packetInfos)
+    {
+        if (isSource)
+        {
+            if (packet.ipv4SrcIp == ip || packet.ipv6SrcIp == ip)
+            {
+                filteredPackets.push_back(packet);
+            }
+        }
+        else
+        {
+            if (packet.ipv4DstIp == ip || packet.ipv6DstIp == ip)
+            {
+                filteredPackets.push_back(packet);
+            }
+        }
+    }
+    return filteredPackets;
+}
+
+std::vector<PacketInfo> PcapParser::FilterByPort(int port, bool isSource) const
+{
+    std::vector<PacketInfo> filteredPackets;
+    for (const auto& packet : m_packetInfos)
+    {
+        if (isSource)
+        {
+            if (packet.tcpSrcPort == port || packet.udpSrcPort == port)
+            {
+                filteredPackets.push_back(packet);
+            }
+        }
+        else
+        {
+            if (packet.tcpDstPort == port || packet.udpDstPort == port)
+            {
+                filteredPackets.push_back(packet);
+            }
+        }
+    }
+    return filteredPackets;
+}
+
+std::vector<PacketInfo> PcapParser::SearchPackets(const std::string& keyword, bool caseSensitive) const
+{
+    std::vector<PacketInfo> searchResults;
+    std::string searchKeyword = caseSensitive ? keyword : keyword;
+    if (!caseSensitive)
+    {
+        std::transform(searchKeyword.begin(), searchKeyword.end(), searchKeyword.begin(), ::tolower);
+    }
+
+    for (const auto& packet : m_packetInfos)
+    {
+        std::string ethSrc = caseSensitive ? packet.ethSrcMac : packet.ethSrcMac;
+        std::string ethDst = caseSensitive ? packet.ethDstMac : packet.ethDstMac;
+        std::string ipv4Src = caseSensitive ? packet.ipv4SrcIp : packet.ipv4SrcIp;
+        std::string ipv4Dst = caseSensitive ? packet.ipv4DstIp : packet.ipv4DstIp;
+        std::string ipv6Src = caseSensitive ? packet.ipv6SrcIp : packet.ipv6SrcIp;
+        std::string ipv6Dst = caseSensitive ? packet.ipv6DstIp : packet.ipv6DstIp;
+
+        if (!caseSensitive)
+        {
+            std::transform(ethSrc.begin(), ethSrc.end(), ethSrc.begin(), ::tolower);
+            std::transform(ethDst.begin(), ethDst.end(), ethDst.begin(), ::tolower);
+            std::transform(ipv4Src.begin(), ipv4Src.end(), ipv4Src.begin(), ::tolower);
+            std::transform(ipv4Dst.begin(), ipv4Dst.end(), ipv4Dst.begin(), ::tolower);
+            std::transform(ipv6Src.begin(), ipv6Src.end(), ipv6Src.begin(), ::tolower);
+            std::transform(ipv6Dst.begin(), ipv6Dst.end(), ipv6Dst.begin(), ::tolower);
+        }
+
+        if (ethSrc.find(searchKeyword) != std::string::npos || ethDst.find(searchKeyword) != std::string::npos ||
+            ipv4Src.find(searchKeyword) != std::string::npos || ipv4Dst.find(searchKeyword) != std::string::npos ||
+            ipv6Src.find(searchKeyword) != std::string::npos || ipv6Dst.find(searchKeyword) != std::string::npos)
+        {
+            searchResults.push_back(packet);
+        }
+    }
+    return searchResults;
+}
+
+const std::vector<PacketInfo>& PcapParser::GetAllPackets() const
+{
+    return m_packetInfos;
 }
 
 void PcapParser::ParseTcpOptions(pcpp::TcpLayer* tcpLayer, PacketInfo& info)

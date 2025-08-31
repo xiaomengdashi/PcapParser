@@ -105,6 +105,43 @@ class PcapParser
      */
     void ProcessPacket(pcpp::RawPacket& rawPacket);
 
+    /**
+     * @brief Filter packets by protocol type
+     * @param protocol Protocol type (6=TCP, 17=UDP, 1=ICMP, etc.)
+     * @return List of filtered packets
+     */
+    std::vector<PacketInfo> FilterByProtocol(int protocol) const;
+
+    /**
+     * @brief Filter packets by IP address
+     * @param ip IP address string
+     * @param isSource Filter source IP if true, destination IP if false
+     * @return List of filtered packets
+     */
+    std::vector<PacketInfo> FilterByIp(const std::string& ip, bool isSource = true) const;
+
+    /**
+     * @brief Filter packets by port number
+     * @param port Port number
+     * @param isSource Filter source port if true, destination port if false
+     * @return List of filtered packets
+     */
+    std::vector<PacketInfo> FilterByPort(int port, bool isSource = true) const;
+
+    /**
+     * @brief Search packets containing specific content
+     * @param keyword Search keyword
+     * @param caseSensitive Whether case sensitive search
+     * @return List of packets containing the keyword
+     */
+    std::vector<PacketInfo> SearchPackets(const std::string& keyword, bool caseSensitive = false) const;
+
+    /**
+     * @brief Get all parsed packets
+     * @return Constant reference to the packet list
+     */
+    const std::vector<PacketInfo>& GetAllPackets() const;
+
    private:
     timespec m_lastTimestamp;
     std::string m_pcapFilePath;
